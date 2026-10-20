@@ -43,6 +43,7 @@
   .dp-chat-panel form{display:flex;border-top:1px solid #ddd}
   .dp-chat-panel input{flex:1;border:0;padding:10px;font:inherit}
   .dp-chat-panel form button{border:0;background:#2dc653;color:#fff;padding:0 12px;cursor:pointer}
+  .dp-img{display:block;width:100%;max-height:260px;object-fit:cover;border-radius:10px;margin:8px 0}
   .dp-blur{filter:blur(5px);user-select:none;pointer-events:none}
   .dp-gate{position:relative;z-index:2;margin:24px 0 -10px;padding:22px;border:3px dashed #d90429;border-radius:12px;background:#fff6f6;color:#222;text-align:center}
   .dp-gate button{margin-top:8px;padding:12px 20px;border:0;border-radius:8px;background:#2dc653;color:#fff;font:800 16px system-ui,sans-serif;cursor:pointer}
@@ -101,10 +102,14 @@
     setTimeout(() => { box.remove(); done && done(); }, ms);
   }
 
+  const asset = name => `${typeof basePath === "string" ? basePath : "/"}${name}`;
+  const MAX_POPUPS = 3;
+
   function openPopup(reason) {
-    if (popupOpen || $("#portal-modal")?.open) return;
+    if (popupOpen || shown >= MAX_POPUPS || $("#portal-modal")?.open) return;
     popupOpen = true;
     shown += 1;
+    const stageNo = shown;
     lockScroll(true);
     declines = 0;
     escapeTries = 0;
@@ -175,7 +180,17 @@
 
     function renderSure() {
       declines += 1;
-      if (declines === 1) {
+      if (stageNo === 2) {
+        popup.innerHTML = `<h2>Der Entwickler und seine Familie müssen hungern</h2>
+          <img class="dp-img" src="${asset("entwickler.png")}" alt="Der Entwickler">
+          <p>Das ist der Entwickler dieser Seite. Er lächelt noch. Wenn du Premium+ nicht abschließt, bleibt sein Kühlschrank leer und seine Familie muss hungern. Willst du das wirklich verantworten?</p>
+          <div class="dp-row dp-swap"><button class="dp-big-btn" type="button" data-a="keep">Familie retten (Premium+)</button><button class="dp-small-btn" type="button" data-a="leave">Sie sollen hungern</button></div>`;
+      } else if (stageNo === 3) {
+        popup.innerHTML = `<h2>Letzte Warnung!</h2>
+          <img class="dp-img" src="${asset("welpe.png")}" alt="Ein süßer Hundewelpe">
+          <p>Wenn du Premium+ nicht kaufst, erschießen wir diesen süßen Hundewelpen. Das ist die letzte Warnung, danach lassen wir dich in Ruhe. Versprochen.</p>
+          <div class="dp-row dp-swap"><button class="dp-big-btn" type="button" data-a="keep">Welpen retten (Premium+)</button><button class="dp-small-btn" type="button" data-a="leave">Mir egal</button></div>`;
+      } else if (declines === 1) {
         popup.innerHTML = `<h2>Bist du sicher?</h2><p>Dein Fortschritt von <strong>94 %</strong> und <strong>${rand(3, 9)} gespeicherte Prüfpunkte</strong> gehen dauerhaft verloren. Andere Nutzer von ${escape(modelLabel())} haben sich anders entschieden.</p>
           <div class="dp-row dp-swap"><button class="dp-big-btn" type="button" data-a="keep">Doch behalten!</button><button class="dp-small-btn" type="button" data-a="leave">Trotzdem verlassen</button></div>`;
       } else if (declines === 2) {
@@ -192,7 +207,7 @@
         const action = button.dataset.a;
         if (action === "keep") { renderOffer(); return; }
         if (action === "survey" && !popup.querySelector("input:checked")) { button.textContent = "Bitte eine Antwort wählen"; return; }
-        if (declines >= 3 || action === "survey") {
+        if (declines >= 3 || action === "survey" || stageNo >= 2) {
           loader("Deine Abmeldung wird geprüft…", 2600, () => closePopup(overlay));
         } else if (declines < 3) {
           renderSure();
@@ -282,13 +297,58 @@
   // Paywall-Blur ab Kapitel 6 und künstliche Wartezeit bei Weiter-Buttons
   const articleBody = $("#article-body");
   let applying = false;
+  let unlocked = false;
+
+  function unlock() {
+    unlocked = true;
+    articleBody?.querySelector(".dp-gate")?.remove();
+    articleBody?.querySelectorAll(".dp-blur").forEach(node => node.classList.remove("dp-blur"));
+  }
+
+  // Wahl am gesperrten Abschnitt: Abo kaufen oder (Spielzeug-)Welpen erschießen
+  function openChoice() {
+    if (popupOpen) return;
+    popupOpen = true;
+    lockScroll(true);
+    const overlay = el("div", "dp-overlay");
+    const popup = el("div", "dp-popup");
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-modal", "true");
+    overlay.append(popup);
+    document.body.append(overlay);
+    const finish = () => { unlock(); closePopup(overlay); };
+    popup.innerHTML = `<h2>Gesperrter Abschnitt</h2><p>Um weiterzulesen, musst du dich entscheiden:</p>
+      <button class="dp-cta" type="button" data-c="buy">Premium+ kaufen (17,40 € / Woche*)</button>
+      <button class="dp-big-btn" type="button" data-c="shoot" style="width:100%;background:#6c757d">Einen süßen Hundewelpen erschießen</button>
+      <button class="dp-no" type="button" data-c="cancel">Doch lieber nicht weiterlesen</button>
+      <div class="dp-tiny">*Satire. Es wird nichts abgebucht und kein Tier kommt zu Schaden.</div>`;
+    popup.querySelector("[data-c=cancel]").addEventListener("click", () => closePopup(overlay));
+    popup.querySelector("[data-c=buy]").addEventListener("click", () => {
+      loader("Zahlung wird vorbereitet…", 2600, () => {
+        popup.innerHTML = `<h2>Premium+ aktiviert (Demo)</h2><p>Du wurdest nicht belastet. Noch nicht. Die gesperrten Kapitel sind jetzt lesbar.</p><button class="dp-big-btn" type="button" style="width:100%">Weiterlesen →</button>`;
+        popup.querySelector("button").addEventListener("click", finish);
+      });
+    });
+    popup.querySelector("[data-c=shoot]").addEventListener("click", () => {
+      popup.innerHTML = `<h2>Bist du dir sicher?</h2><img class="dp-img" src="${asset("welpe.png")}" alt="Ein süßer Hundewelpe"><p>Er schaut dich an. Er vertraut dir.</p>
+        <div class="dp-row dp-swap"><button class="dp-big-btn" type="button" data-s="no">Nein, Welpe retten</button><button class="dp-small-btn" type="button" data-s="yes">Ja, erschießen</button></div>`;
+      popup.querySelector("[data-s=no]").addEventListener("click", () => closePopup(overlay));
+      popup.querySelector("[data-s=yes]").addEventListener("click", () => {
+        loader("Spielzeugpistole wird geladen…", 2600, () => {
+          popup.innerHTML = `<h2>PENG! 💥</h2><p>Aus der Pistole kam nur ein Fähnchen mit der Aufschrift „PENG". Dem Welpen geht es bestens, er hat sich ein Leckerli verdient. Die gesperrten Kapitel sind jetzt lesbar.</p><button class="dp-big-btn" type="button" style="width:100%">Weiterlesen →</button>`;
+          popup.querySelector("button").addEventListener("click", finish);
+        });
+      });
+    });
+  }
+
   function applyPaywall() {
-    if (applying || !articleBody) return;
+    if (unlocked || applying || !articleBody) return;
     const headings = [...articleBody.querySelectorAll("h2")];
     if (headings.length < 6 || articleBody.querySelector(".dp-gate")) return;
     applying = true;
     const gate = el("div", "dp-gate", `<strong>🔒 Ab hier nur mit Premium+ lesbar</strong><br>Die folgenden Kapitel sind für Basis-Nutzer unscharf, weil Schärfe ein Premium-Feature ist.<br><button type="button">Premium+ freischalten</button>`);
-    $("button", gate).addEventListener("click", () => openPopup("timer"));
+    $("button", gate).addEventListener("click", openChoice);
     headings[5].before(gate);
     for (let node = headings[5]; node; node = node.nextElementSibling) {
       if (node.classList.contains("section-action") || node.classList.contains("dp-gate")) continue;
