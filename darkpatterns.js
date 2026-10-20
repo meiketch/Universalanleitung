@@ -53,7 +53,29 @@
   @keyframes dp-load{to{width:99%}}
   .dp-fineprint{font-size:7px;color:#ccc;max-width:900px;margin:20px auto;padding:0 16px;line-height:1.2}
   body.dp-lock{overflow:hidden}
-  @media (prefers-reduced-motion:reduce){.dp-cta,.dp-toast{animation:none}.dp-close{transition:none}}
+  .dp-toast.dp-bad{border-left-color:#d90429;background:#fff1f1}
+  .xp-win{width:min(520px,100%);background:#ece9d8;border:3px solid #0a3fc4;border-radius:9px 9px 3px 3px;font:13px Tahoma,Verdana,sans-serif;color:#000;box-shadow:0 12px 50px rgba(0,0,0,.7)}
+  .xp-title{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(#3a82f0,#0a54d6 40%,#0a3fc4);color:#fff;font-weight:700;padding:6px 8px;border-radius:6px 6px 0 0;text-shadow:1px 1px #000}
+  .xp-x{background:#d9442b;border:1px solid #fff;border-radius:3px;width:20px;text-align:center;font-size:11px;line-height:18px}
+  .xp-body{display:flex;gap:14px;padding:16px;min-height:170px;background:#fff;margin:0}
+  .xp-side{font-size:64px;background:linear-gradient(#0a3fc4,#3a82f0);padding:10px;border-radius:4px;display:flex;align-items:center}
+  .xp-main h3{margin:0 0 8px;font-size:16px}.xp-main p{margin:6px 0}
+  .xp-box{height:90px;overflow:auto;border:1px solid #7f9db9;padding:6px;margin:8px 0;background:#fff;font-size:12px}
+  .xp-bar{height:20px;border:2px inset #aaa;background:#fff;padding:1px}
+  #xp-fill{height:100%;width:0;background:repeating-linear-gradient(90deg,#2fd02f 0 10px,#fff 10px 12px)}
+  .xp-btns{display:flex;justify-content:flex-end;gap:8px;padding:10px;border-top:1px solid #aca899}
+  .xp-btns button{min-width:84px;padding:4px 10px;font:13px Tahoma,Verdana,sans-serif;background:linear-gradient(#fff,#ece9d8);border:1px solid #003c74;border-radius:3px;cursor:pointer}
+  .xp-btns button:disabled{color:#999;border-color:#999;cursor:default}
+  .dp-wheelbtn{position:fixed;left:14px;top:46%;z-index:7500;border:0;border-radius:30px;padding:12px 16px;background:linear-gradient(#ffd60a,#ff9f1c);color:#111;font:800 14px system-ui,sans-serif;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.4);animation:dp-pulse 1.2s infinite}
+  .dp-wheel-wrap{position:relative;width:min(300px,70vw);margin:8px auto}
+  .dp-wheel-wrap canvas{width:100%;height:auto;display:block;border-radius:50%;box-shadow:0 0 0 6px #333}
+  .dp-pointer{position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:30px;color:#d90429;z-index:2;text-shadow:0 2px 2px #000}
+  .dp-wheel-info{text-align:center;min-height:44px;font-weight:700}
+  .dp-ad{display:flex;gap:14px;align-items:center;margin:24px 0;padding:12px;border:1px solid #ccc;border-radius:10px;background:#fafafa;color:#222;text-decoration:none;font:14px/1.4 system-ui,sans-serif}
+  .dp-ad img{width:92px;height:92px;object-fit:cover;border-radius:8px;flex:none;background:#eee}
+  .dp-ad small{display:block;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+  .dp-ad strong{display:block;font-size:15px;margin:2px 0}
+  @media (prefers-reduced-motion:reduce){.dp-cta,.dp-toast,.dp-wheelbtn{animation:none}.dp-close{transition:none}}
   `;
   const style = document.createElement("style");
   style.textContent = css;
@@ -266,11 +288,13 @@
   // Social-Proof-Toasts
   const people = ["Jürgen aus Bottrop", "Sabine aus Gera", "Kevin aus Hamm", "Uwe aus Cuxhaven", "Chantal aus Wanne-Eickel", "Dieter aus Offenbach"];
   const acts = ["hat gerade Premium+ gebucht", "hat die Vorbereitung verlängert", "hat 3 Zusatzprüfungen freigeschaltet", "hat Kapitel 1 erneut gelesen", "wurde zum 4. Mal nach Aktualisierung gefragt"];
+  const guilt = ["hat Premium+ NICHT gekauft. Der Entwickler hungert jetzt seinetwegen. Möchtest du auch so sein?", "hat das Abo abgelehnt. Die Familie des Entwicklers isst heute nichts. Willst du das auch?", "hat auf „Nein“ geklickt und ist damit schuld, dass der Entwickler hungern muss. Möchtest du wirklich so sein?", "hat Premium+ ignoriert. Der Entwickler weint. Du auch bald?"];
   setInterval(() => {
     document.querySelectorAll(".dp-toast").forEach(t => t.remove());
-    const toast = el("div", "dp-toast", `<strong>${escape(pick(people))}</strong><br>${pick(acts)} <small style="color:#777">· vor ${rand(1, 9)} Min.</small>`);
+    const bad = Math.random() < 0.45;
+    const toast = el("div", "dp-toast" + (bad ? " dp-bad" : ""), `<strong>${escape(pick(people))}</strong><br>${bad ? pick(guilt) : pick(acts)} <small style="color:#777">· vor ${rand(1, 9)} Min.</small>`);
     document.body.append(toast);
-    setTimeout(() => toast.remove(), 5000);
+    setTimeout(() => toast.remove(), bad ? 7000 : 5000);
   }, 11000);
 
   // Fake-Live-Chat
@@ -319,9 +343,9 @@
     const finish = () => { unlock(); closePopup(overlay); };
     popup.innerHTML = `<h2>Gesperrter Abschnitt</h2><p>Um weiterzulesen, musst du dich entscheiden:</p>
       <button class="dp-cta" type="button" data-c="buy">Premium+ kaufen (17,40 € / Woche*)</button>
-      <button class="dp-big-btn" type="button" data-c="shoot" style="width:100%;background:#6c757d">Einen süßen Hundewelpen erschießen</button>
+      <button class="dp-big-btn" type="button" data-c="malware" style="width:100%;background:#6c757d">Malware installieren</button>
       <button class="dp-no" type="button" data-c="cancel">Doch lieber nicht weiterlesen</button>
-      <div class="dp-tiny">*Satire. Es wird nichts abgebucht und kein Tier kommt zu Schaden.</div>`;
+      <div class="dp-tiny">*Satire. Es wird nichts abgebucht, und die „Malware" ist eine harmlose Simulation.</div>`;
     popup.querySelector("[data-c=cancel]").addEventListener("click", () => closePopup(overlay));
     popup.querySelector("[data-c=buy]").addEventListener("click", () => {
       loader("Zahlung wird vorbereitet…", 2600, () => {
@@ -329,17 +353,62 @@
         popup.querySelector("button").addEventListener("click", finish);
       });
     });
-    popup.querySelector("[data-c=shoot]").addEventListener("click", () => {
-      popup.innerHTML = `<h2>Bist du dir sicher?</h2><img class="dp-img" src="${asset("welpe.png")}" alt="Ein süßer Hundewelpe"><p>Er schaut dich an. Er vertraut dir.</p>
-        <div class="dp-row dp-swap"><button class="dp-big-btn" type="button" data-s="no">Nein, Welpe retten</button><button class="dp-small-btn" type="button" data-s="yes">Ja, erschießen</button></div>`;
-      popup.querySelector("[data-s=no]").addEventListener("click", () => closePopup(overlay));
-      popup.querySelector("[data-s=yes]").addEventListener("click", () => {
-        loader("Spielzeugpistole wird geladen…", 2600, () => {
-          popup.innerHTML = `<h2>PENG! 💥</h2><p>Aus der Pistole kam nur ein Fähnchen mit der Aufschrift „PENG". Dem Welpen geht es bestens, er hat sich ein Leckerli verdient. Die gesperrten Kapitel sind jetzt lesbar.</p><button class="dp-big-btn" type="button" style="width:100%">Weiterlesen →</button>`;
-          popup.querySelector("button").addEventListener("click", finish);
-        });
-      });
+    popup.querySelector("[data-c=malware]").addEventListener("click", () => {
+      overlay.remove();
+      popupOpen = true;
+      openInstaller(finish);
     });
+  }
+
+  // Windows-XP-Installer (reine Simulation, es passiert nichts)
+  function openInstaller(onDone) {
+    popupOpen = true;
+    lockScroll(true);
+    const overlay = el("div", "dp-overlay");
+    const win = el("div", "xp-win");
+    overlay.append(win);
+    document.body.append(overlay);
+    const close = () => { overlay.remove(); popupOpen = false; lastClosed = Date.now(); lockScroll(false); };
+    const frame = (title, body, buttons) => {
+      win.innerHTML = `<div class="xp-title"><span>💿 ${title}</span><b class="xp-x">✕</b></div><div class="xp-body">${body}</div><div class="xp-btns">${buttons}</div>`;
+    };
+    const step1 = () => {
+      frame("Setup – GratisLeseTool 2003", `<div class="xp-side">🛡️</div><div class="xp-main"><h3>Willkommen beim Setup-Assistenten</h3><p>Dieser Assistent installiert <b>GratisLeseTool Deluxe</b> auf Ihrem Computer, damit Sie weiterlesen dürfen.</p><p>Es wird empfohlen, vor dem Fortfahren alle Antivirenprogramme zu deaktivieren.</p><p>Klicken Sie auf „Weiter", um fortzufahren.</p></div>`,
+        `<button data-x="next">Weiter &gt;</button><button data-x="cancel">Abbrechen</button>`);
+      win.querySelector("[data-x=next]").onclick = step2;
+      win.querySelector("[data-x=cancel]").onclick = close;
+    };
+    const step2 = () => {
+      frame("Setup – Lizenzvereinbarung", `<div class="xp-main" style="width:100%"><p>Bitte lesen Sie die folgenden Lizenzbedingungen sorgfältig durch.</p><div class="xp-box">Mit der Installation erlauben Sie uns, Ihre Dateien zu verschlüsseln, Ihre Passwörter zu kopieren, Ihre Webcam zu benutzen und Ihre Daten an 612 Partner zu verkaufen. Sie verzichten auf alle Rechte, auf Ihren Kontostand und auf Ihre Würde. Dies ist Satire.</div><label><input type="checkbox" id="xp-ok"> Ich akzeptiere die Vereinbarung (kein Lesen erforderlich)</label></div>`,
+        `<button data-x="next" disabled>Installieren</button><button data-x="cancel">Abbrechen</button>`);
+      const ok = win.querySelector("#xp-ok");
+      const next = win.querySelector("[data-x=next]");
+      ok.onchange = () => { next.disabled = !ok.checked; };
+      next.onclick = step3;
+      win.querySelector("[data-x=cancel]").onclick = close;
+    };
+    const step3 = () => {
+      frame("Setup – Installation läuft", `<div class="xp-main" style="width:100%"><p>Bitte warten Sie, während GratisLeseTool installiert wird.</p><p id="xp-status">Initialisierung…</p><div class="xp-bar"><div id="xp-fill"></div></div><p id="xp-pct" style="text-align:right">0 %</p></div>`,
+        `<button disabled>Weiter</button><button disabled>Abbrechen</button>`);
+      const statuses = ["Dateien werden verschlüsselt…", "Passwörter werden kopiert…", "Browserverlauf wird an 612 Partner gesendet…", "Webcam wird aktiviert…", "Bankdaten werden gesucht…", "Kryptominer wird gestartet…", "Desktop-Hintergrund wird durch Katzenfoto ersetzt…", "Antivirenprogramm wird überredet…", "Zusätzliche Toolbars werden installiert…", "Verbleibende Würde wird entfernt…"];
+      const fill = win.querySelector("#xp-fill");
+      const status = win.querySelector("#xp-status");
+      const pct = win.querySelector("#xp-pct");
+      let value = 0;
+      const timer = setInterval(() => {
+        value = Math.min(100, value + rand(1, 3));
+        fill.style.width = `${value}%`;
+        pct.textContent = `${value} %`;
+        status.textContent = statuses[Math.min(statuses.length - 1, Math.floor(value / 10))];
+        if (value >= 100) { clearInterval(timer); step4(); }
+      }, 140);
+    };
+    const step4 = () => {
+      frame("Setup – Fertig", `<div class="xp-side">✅</div><div class="xp-main"><h3>Setup abgeschlossen</h3><p>Keine Sorge: Das war nur eine Simulation. Es wurde nichts installiert, kopiert, verschlüsselt oder gesendet.</p><p>Die gesperrten Kapitel sind jetzt lesbar.</p></div>`,
+        `<button data-x="done">Fertig stellen</button>`);
+      win.querySelector("[data-x=done]").onclick = () => { overlay.remove(); popupOpen = false; onDone(); };
+    };
+    step1();
   }
 
   function applyPaywall() {
@@ -403,4 +472,189 @@
   // Kleingedrucktes
   const fine = el("p", "dp-fineprint", "Alle Preise verstehen sich als Beispiel. Mit der Nutzung dieser Seite stimmst du allen Bedingungen zu, die wir noch erfinden. Premium+ kann Spuren von Fortschritt enthalten. Diese Seite ist Satire und verkauft nichts.");
   document.querySelector("footer")?.after(fine);
+
+  // Glücksrad (Ablauf ist fest vorgegeben, es kann nichts gewonnen werden)
+  const SEGMENTS = ["Lizenzcode", "2 Gratis-Spins", "Fast!", "100 km/h Datei", "Niete", "-1 % Rabatt", "Leider nein", "Niete"];
+  const COLORS = ["#ffd60a", "#2dc653", "#e5e5e5", "#4cc9f0", "#e5e5e5", "#b5179e", "#e5e5e5", "#e5e5e5"];
+  const ease = {
+    outCubic: t => 1 - Math.pow(1 - t, 3),
+    outQuart: t => 1 - Math.pow(1 - t, 4),
+    inOut: t => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2)
+  };
+  let wheelAngle = 135;
+  let spinsLeft = 1;
+  let spinNo = 0;
+  let spinning = false;
+
+  function drawWheel(canvas) {
+    const ctx = canvas.getContext("2d");
+    const size = canvas.width;
+    const c = size / 2;
+    const step = (Math.PI * 2) / SEGMENTS.length;
+    SEGMENTS.forEach((label, i) => {
+      const start = (i - 0.5) * step - Math.PI / 2;
+      ctx.beginPath();
+      ctx.moveTo(c, c);
+      ctx.arc(c, c, c - 4, start, start + step);
+      ctx.fillStyle = COLORS[i];
+      ctx.fill();
+      ctx.strokeStyle = "#333";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.save();
+      ctx.translate(c, c);
+      ctx.rotate(i * step);
+      ctx.fillStyle = "#111";
+      ctx.font = "bold 20px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(label, 0, -c * 0.62, c * 0.6);
+      ctx.restore();
+    });
+    ctx.beginPath();
+    ctx.arc(c, c, 18, 0, Math.PI * 2);
+    ctx.fillStyle = "#333";
+    ctx.fill();
+  }
+
+  function runFrames(canvas, frames, finished) {
+    let index = 0;
+    const next = () => {
+      const frame = frames[index++];
+      if (!frame) { finished(); return; }
+      if (frame.note) frame.note();
+      if (frame.hold !== undefined) { setTimeout(next, frame.hold); return; }
+      const from = wheelAngle;
+      const started = performance.now();
+      const tick = now => {
+        const t = Math.min(1, (now - started) / frame.dur);
+        wheelAngle = from + (frame.to - from) * frame.ease(t);
+        canvas.style.transform = `rotate(${wheelAngle}deg)`;
+        if (t < 1) requestAnimationFrame(tick); else next();
+      };
+      requestAnimationFrame(tick);
+    };
+    next();
+  }
+
+  function alignTo(base, targetMod) {
+    return base + ((targetMod - (base % 360)) + 360) % 360;
+  }
+
+  function openWheel() {
+    if (popupOpen) return;
+    popupOpen = true;
+    lockScroll(true);
+    const overlay = el("div", "dp-overlay");
+    const popup = el("div", "dp-popup");
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-modal", "true");
+    overlay.append(popup);
+    document.body.append(overlay);
+    const leave = () => closePopup(overlay);
+
+    function view(info) {
+      popup.innerHTML = `<button class="dp-close" type="button" aria-label="Schließen" style="font-size:12px;width:22px;height:22px">✕</button>
+        <h2>🎡 Glücksrad</h2>
+        <p style="margin:0">Gewinne einen <strong>Lizenzcode</strong>! Verbleibende Spins: <strong id="dp-spins">${spinsLeft}</strong>${spinNo === 0 ? " (der erste ist gratis)" : ""}</p>
+        <div class="dp-wheel-wrap"><span class="dp-pointer">▼</span><canvas width="520" height="520"></canvas></div>
+        <div class="dp-wheel-info" id="dp-info">${info || ""}</div>
+        <button class="dp-cta" type="button" id="dp-spin" style="animation:none">${spinsLeft > 0 ? "JETZT DREHEN" : "Spin kaufen (5 €)"}</button>
+        <div class="dp-tiny">Spielzeug-Demo. Es wird nichts verlost, abgebucht oder gespeichert. Weitere Spins: 5 € pro Spin.</div>`;
+      const canvas = popup.querySelector("canvas");
+      drawWheel(canvas);
+      canvas.style.transform = `rotate(${wheelAngle}deg)`;
+      popup.querySelector(".dp-close").addEventListener("click", leave);
+      popup.querySelector("#dp-spin").addEventListener("click", () => spin(canvas));
+    }
+
+    function setInfo(html) { const box = popup.querySelector("#dp-info"); if (box) box.innerHTML = html; }
+
+    function spin(canvas) {
+      if (spinning) return;
+      if (spinsLeft <= 0) { buy(); return; }
+      spinning = true;
+      spinsLeft -= 1;
+      spinNo += 1;
+      popup.querySelector("#dp-spins").textContent = spinsLeft;
+      popup.querySelector("#dp-spin").disabled = true;
+      setInfo("Das Rad dreht sich…");
+      const frames = [];
+      if (spinNo === 1) {
+        const t = alignTo(wheelAngle + 1800, 0);
+        frames.push({ to: t - 2, dur: 4200, ease: ease.outCubic },
+          { hold: 700, note: () => setInfo("🎉 LIZENZCODE!") },
+          { to: t - 45, dur: 500, ease: ease.inOut, note: () => setInfo("🎉 LIZENZ…") });
+      } else if (spinNo === 2) {
+        frames.push({ to: alignTo(wheelAngle + 1440, 225), dur: 4500, ease: ease.outQuart });
+      } else {
+        const t = alignTo(wheelAngle + 1080, 0);
+        frames.push({ to: t - 25, dur: 3000, ease: ease.outCubic },
+          { to: t + 20, dur: 5500, ease: ease.inOut },
+          { hold: 500 },
+          { to: t + 45, dur: 900, ease: ease.inOut });
+      }
+      runFrames(canvas, frames, () => {
+        spinning = false;
+        const landed = SEGMENTS[((Math.round(-wheelAngle / 45) % 8) + 8) % 8];
+        if (spinNo === 1) {
+          spinsLeft += 2;
+          view(`<span style="color:#2dc653">Das Rad ist zurückgerollt: Du gewinnst <b>2 Gratis-Spins</b>!</span>`);
+        } else if (spinNo === 2) {
+          view(`Gewonnen: <b>${landed}</b> 🚀<br><button class="dp-big-btn" type="button" id="dp-dl" style="margin-top:6px;padding:8px 14px">Datei herunterladen</button>`);
+          popup.querySelector("#dp-dl").addEventListener("click", download);
+        } else {
+          view(`<span style="color:#d90429">${landed}. Knapp daneben!</span> Weitere Spins kosten 5 € pro Spin.`);
+        }
+      });
+    }
+
+    function download() {
+      loader("Datei wird vorbereitet…", 2200, () => {
+        popup.innerHTML = `<h2>Speicher voll</h2><p>Auf deinem Gerät ist nicht genügend Speicherplatz verfügbar (0 Byte frei). Für die Bereinigung des Speichers fallen einmalig <strong>5 €</strong> an.</p>
+          <button class="dp-cta" type="button" data-p="pay" style="animation:none">5 € zahlen und Speicher bereinigen</button>
+          <button class="dp-no" type="button" data-p="back">Zurück</button>`;
+        popup.querySelector("[data-p=back]").addEventListener("click", () => view(""));
+        popup.querySelector("[data-p=pay]").addEventListener("click", () => {
+          loader("Speicher wird bereinigt…", 2600, () => {
+            popup.innerHTML = `<h2>Bereinigung nicht möglich</h2><p>Die Bereinigung setzt eine vollständig abgeschlossene Vorbereitungsphase voraus. Du wurdest nicht belastet. Noch nicht.</p><button class="dp-big-btn" type="button" style="width:100%">Zurück zum Glücksrad</button>`;
+            popup.querySelector("button").addEventListener("click", () => view(""));
+          });
+        });
+      });
+    }
+
+    function buy() {
+      popup.innerHTML = `<h2>Mehr Spins</h2><p>Du hast keine Spins mehr. Jeder weitere Spin kostet <strong>5 €</strong>.</p>
+        <button class="dp-cta" type="button" data-p="pay" style="animation:none">1 Spin für 5 € kaufen</button>
+        <button class="dp-no" type="button" data-p="back">Zurück</button>`;
+      popup.querySelector("[data-p=back]").addEventListener("click", () => view(""));
+      popup.querySelector("[data-p=pay]").addEventListener("click", () => {
+        loader("Zahlung wird vorbereitet…", 2600, () => {
+          popup.innerHTML = `<h2>Zahlung nicht möglich</h2><p>Für den Kauf weiterer Spins muss zunächst die Vorbereitungsphase abgeschlossen sein. Bitte lies zunächst Kapitel 1 erneut. Du wurdest nicht belastet.</p><button class="dp-big-btn" type="button" style="width:100%">Zurück zum Glücksrad</button>`;
+          popup.querySelector("button").addEventListener("click", () => view(""));
+        });
+      });
+    }
+
+    view("");
+  }
+
+  const wheelButton = el("button", "dp-wheelbtn", "🎡 Gratis-Glücksrad");
+  wheelButton.type = "button";
+  wheelButton.addEventListener("click", openWheel);
+  document.body.append(wheelButton);
+
+  // Werbung mit kleiner Produktvorschau
+  function placeAd() {
+    if (!articleBody || articleBody.querySelector(".dp-ad")) return;
+    const headings = articleBody.querySelectorAll("h2");
+    if (headings.length < 3) return;
+    const ad = el("a", "dp-ad", `<img src="https://etel-tuning.eu/wp-content/uploads/2014/10/486-Adapter-Drehstrom-auf-Gardena.jpg" alt="Adapter Drehstrom auf Schlauchanschluss" loading="lazy" referrerpolicy="no-referrer"><span><small>Anzeige</small><strong>Adapter Drehstrom auf Schlauchanschluss – Die Weltneuheit</strong>Wenn man dringend Wasser braucht und nur einen klassischen Drehstromanschluss zur Verfügung hat.</span>`);
+    ad.href = "https://etel-tuning.eu/produkt/adapter-drehstrom-auf-schlauchanschluss/";
+    ad.target = "_blank";
+    ad.rel = "noopener sponsored";
+    headings[2].before(ad);
+  }
+  if (articleBody) new MutationObserver(placeAd).observe(articleBody, { childList: true });
+  placeAd();
 })();
