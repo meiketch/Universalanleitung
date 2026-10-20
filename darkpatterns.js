@@ -356,7 +356,7 @@
     popup.querySelector("[data-c=malware]").addEventListener("click", () => {
       overlay.remove();
       popupOpen = true;
-      openInstaller(finish);
+      openInstaller(() => { finish(); setTimeout(openMalwareAlert, 600); });
     });
   }
 
@@ -649,11 +649,49 @@
     if (!articleBody || articleBody.querySelector(".dp-ad")) return;
     const headings = articleBody.querySelectorAll("h2");
     if (headings.length < 3) return;
-    const ad = el("a", "dp-ad", `<img src="https://etel-tuning.eu/wp-content/uploads/2014/10/486-Adapter-Drehstrom-auf-Gardena.jpg" alt="Adapter Drehstrom auf Schlauchanschluss" loading="lazy" referrerpolicy="no-referrer"><span><small>Anzeige</small><strong>Adapter Drehstrom auf Schlauchanschluss – Die Weltneuheit</strong>Wenn man dringend Wasser braucht und nur einen klassischen Drehstromanschluss zur Verfügung hat.</span>`);
-    ad.href = "https://etel-tuning.eu/produkt/adapter-drehstrom-auf-schlauchanschluss/";
-    ad.target = "_blank";
-    ad.rel = "noopener sponsored";
-    headings[2].before(ad);
+    const up = "https://etel-tuning.eu/wp-content/uploads/2014/10/";
+    const ads = [
+      ["adapter-drehstrom-auf-schlauchanschluss", "486-Adapter-Drehstrom-auf-Gardena.jpg", "Adapter Drehstrom auf Schlauchanschluss – Die Weltneuheit", "Wenn man dringend Wasser braucht und nur einen klassischen Drehstromanschluss zur Verfügung hat."],
+      ["laptop-selbstladekabel", "laptop_selbstladekabel_usb.jpg", "Selbstladekabel für Laptop / MacBook", "Nutzen Sie die natürliche Kraft Ihres Netzteils, um den Laptop sich selbst laden zu lassen."],
+      ["drehzahlmesser", "310-Drehzahlmesser.jpg", "Drehzahlmesser", "Die Zahlen werden nach Ihrem Fahrzeugtyp entsprechend gedreht und gespiegelt."],
+      ["drehmomentschlussel-mit-flexiblem-schwanenhals", "172-Drehmomentschlussel-mit-flexiblem-Schwanenhals.jpg", "Drehmomentschlüssel mit flexiblem Schwanenhals", "Für jedes Drehmoment die passende Biegung."],
+      ["erweitertes-augenmass", "augenmass.jpg", "Augenmaß V2", "Das Upgrade fürs Augenmaß: DIN-konforme Schätzungen."],
+      ["90-bit", "244-90°-Bit.jpg", "90° Bit", "Löst Schrauben in versteckten Winkeln."],
+      ["schnellfeilol", "425-Schnellfeilol.jpg", "Schnellfeilöl", "Ersetzt die Schnellfeilpaste um ein Vielfaches."],
+      ["kreisfeile", "kreisfeile.jpg", "Kreisfeile", "Kein nerviger Richtungswechsel zwischen Vor und Zurück mehr."]
+    ];
+    ads.forEach((a, i) => {
+      const h = headings[2 + i * 2];
+      if (!h) return;
+      const ad = el("a", "dp-ad", `<img src="${up}${encodeURI(a[1])}" alt="${a[2]}" loading="lazy" referrerpolicy="no-referrer"><span><small>Anzeige</small><strong>${a[2]}</strong>${a[3]}</span>`);
+      ad.href = `https://etel-tuning.eu/produkt/${a[0]}/`;
+      ad.target = "_blank";
+      ad.rel = "noopener sponsored";
+      h.before(ad);
+    });
+  }
+
+  function openMalwareAlert() {
+    popupOpen = true;
+    lockScroll(true);
+    const overlay = el("div", "dp-overlay");
+    const popup = el("div", "dp-popup");
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-modal", "true");
+    overlay.append(popup);
+    document.body.append(overlay);
+    const done = () => { unlock(); closePopup(overlay); };
+    popup.innerHTML = `<h2>⚠️ Malware erkannt!</h2><p>Auf deinem Gerät wurde Malware gefunden. Wie konnte das nur passieren? Unser <strong>Malware-Schutz Premium</strong> entfernt sie sofort.</p>
+      <button class="dp-cta" type="button" data-m="buy">Abo abschließen (30 € / Woche*)</button>
+      <button class="dp-no" type="button" data-m="no">Ich mag meine Malware</button>
+      <div class="dp-tiny">*Satire. Es wird nichts abgebucht, und die „Malware" war nur eine Simulation.</div>`;
+    popup.querySelector("[data-m=no]").addEventListener("click", done);
+    popup.querySelector("[data-m=buy]").addEventListener("click", () => {
+      loader("Malware wird entfernt…", 2600, () => {
+        popup.innerHTML = `<h2>Abo aktiviert (Demo)</h2><p>Du wurdest nicht belastet. Noch nicht. Die Malware war nie echt, aber die Rechnung wäre es gewesen.</p><button class="dp-big-btn" type="button" style="width:100%">Schließen</button>`;
+        popup.querySelector("button").addEventListener("click", done);
+      });
+    });
   }
   if (articleBody) new MutationObserver(placeAd).observe(articleBody, { childList: true });
   placeAd();
