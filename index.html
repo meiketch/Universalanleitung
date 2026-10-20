@@ -501,6 +501,9 @@
 
     setModel();
     loadArticle();
+    const darkPatterns = document.createElement("script");
+    darkPatterns.src = `${basePath}darkpatterns.js`;
+    document.body.append(darkPatterns);
   </script>
 </body>
 </html>
